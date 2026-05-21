@@ -1,0 +1,1262 @@
+<!--
+  ┌─────────────────────────────────────────────────────────────┐
+  │  Hey Sawgatam🌷— you viewed source. That's exactly the kind of        │
+  │  curiosity I bring to every codebase.                       │
+  │                                                             │
+  │  Single file. No frameworks. No build step.                 │
+  │  Just HTML, CSS, and vanilla JS — the way the web works.   │
+  │                                                             │
+  │  If you're hiring engineers who sweat the details:          │
+  │  abishekpuri77@gmail.com                                    │
+  └─────────────────────────────────────────────────────────────┘
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>abishek@portfolio:~</title>
+
+<!-- Open Graph -->
+<meta property="og:title"       content="Abishek Puri — Terminal Portfolio">
+<meta property="og:description" content="CS + Data Analytics @ Texas State · Builder of PuriPy, Astralecture, RAG Chatbot · Open to SWE internships 2026">
+<meta property="og:type"        content="website">
+<meta name="twitter:card"       content="summary">
+<meta name="twitter:title"      content="Abishek Puri — Terminal Portfolio">
+<meta name="twitter:description" content="Type 'help' to explore. Built with zero dependencies.">
+<meta name="description"        content="Interactive terminal portfolio for Abishek Puri — CS student, builder, open to SWE internships Summer/Fall 2026.">
+
+<!-- Favicon: green block cursor -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='10' height='13' x='3' y='2' rx='1' fill='%2300ff9f'/></svg>">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Abishek Puri",
+  "email": "abishekpuri77@gmail.com",
+  "url": "https://github.com/ivakehs77",
+  "jobTitle": "CS + Data Analytics Student",
+  "affiliation": { "@type": "Organization", "name": "Texas State University" },
+  "sameAs": [
+    "https://github.com/ivakehs77",
+    "https://www.linkedin.com/in/abishek-puri-9a6652303/"
+  ]
+}
+</script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --green: #00ff9f;
+    --dim: #5a8a6a;
+    --dark-green: #003d26;
+    --surface: #1a1a24;
+    --red: #ff5f57;
+    --yellow: #ffbd2e;
+    --btn-green: #28c840;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+  }
+
+  /* Matrix rain */
+  #matrix {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Scanlines */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Terminal window */
+  #terminal-window {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  #terminal-window.minimized {
+    transform: translateY(calc(100% - 40px));
+  }
+
+  #terminal-window.minimized #titlebar {
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+  }
+
+  /* Title bar */
+  #titlebar {
+    background: var(--surface);
+    border-bottom: 1px solid #1e2d22;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  .dots {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+  }
+
+  .dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: filter 0.1s;
+    flex-shrink: 0;
+  }
+  .dot:hover { filter: brightness(0.8); }
+  .dot::before {
+    content: '';
+    font-size: 9px;
+    font-weight: 900;
+    color: rgba(0,0,0,0.55);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .dots:hover .dot.red::before    { content: '×'; }
+  .dots:hover .dot.yellow::before { content: '−'; }
+  .dots:hover .dot.green::before  { content: '+'; }
+
+  .dot.red    { background: var(--red); }
+  .dot.yellow { background: var(--yellow); }
+  .dot.green  { background: var(--btn-green); }
+
+  /* Close modal */
+  #close-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+  #close-modal.show { display: flex; }
+
+  .modal-box {
+    background: #16161f;
+    border: 1px solid #2a3a2e;
+    border-radius: 14px;
+    padding: 32px 36px;
+    min-width: 340px;
+    text-align: center;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+    animation: modalIn 0.18s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.88); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .modal-box h3 {
+    color: var(--green);
+    font-size: 15px;
+    margin-bottom: 10px;
+    letter-spacing: 0.04em;
+  }
+  .modal-box p {
+    color: var(--dim);
+    font-size: 12px;
+    margin-bottom: 26px;
+    line-height: 1.7;
+  }
+  .modal-box p kbd {
+    background: #2a3a2e;
+    color: var(--green);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  .modal-btns {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+  .modal-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 9px 26px;
+    border-radius: 7px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .modal-btn.cancel {
+    background: transparent;
+    border-color: #2a3a2e;
+    color: var(--dim);
+  }
+  .modal-btn.cancel:hover { border-color: var(--dim); color: var(--green); }
+  .modal-btn.confirm {
+    background: var(--red);
+    border-color: var(--red);
+    color: #1a0505;
+    font-weight: 700;
+  }
+  .modal-btn.confirm:hover { filter: brightness(1.12); }
+
+  .title-text {
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    color: var(--dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* Output area */
+  #output {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px 12px;
+    scroll-behavior: smooth;
+  }
+
+  #output::-webkit-scrollbar { width: 4px; }
+  #output::-webkit-scrollbar-track { background: transparent; }
+  #output::-webkit-scrollbar-thumb { background: var(--dark-green); border-radius: 2px; }
+
+  .line {
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    animation: fadein 0.15s ease;
+  }
+
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(2px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .line.prompt-line { color: var(--green); }
+  .line.output-line { color: var(--dim); padding-left: 2px; }
+  .line.blank       { height: 10px; }
+  .line.highlight   { color: var(--green); font-weight: 500; }
+  .line.error       { color: #ff6b6b; }
+
+  .prompt-prefix {
+    color: var(--dim);
+    margin-right: 4px;
+    user-select: none;
+  }
+
+  /* Link styling inside output */
+  .out-link {
+    color: var(--green);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.15s;
+  }
+  .out-link:hover { opacity: 1; }
+
+  /* Input row */
+  #input-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 24px 14px;
+    gap: 6px;
+    flex-shrink: 0;
+    border-top: 1px solid #0e1a12;
+  }
+
+  #input-prefix {
+    color: var(--dim);
+    font-size: 14px;
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  #cmd-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    caret-color: var(--green);
+  }
+
+  #cmd-input::placeholder { color: var(--dark-green); }
+
+  /* Blinking cursor shown during auto-play */
+  #autoplay-cursor {
+    display: inline-block;
+    width: 9px;
+    height: 15px;
+    background: var(--green);
+    animation: blink 0.9s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 1px;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
+  }
+
+  @keyframes bleedIn {
+    0%   { opacity: 0; }
+    20%  { opacity: 0.55; }
+    60%  { opacity: 0.82; }
+    100% { opacity: 0.9; }
+  }
+  @keyframes bleedOut {
+    0%   { opacity: 0.9; }
+    100% { opacity: 0; }
+  }
+  @keyframes screenShake {
+    0%,100% { transform: translate(0,0) rotate(0deg); }
+    15%  { transform: translate(-5px, 3px) rotate(-0.3deg); }
+    30%  { transform: translate(5px, -3px) rotate(0.3deg); }
+    45%  { transform: translate(-4px, 4px) rotate(-0.2deg); }
+    60%  { transform: translate(4px, -2px) rotate(0.2deg); }
+    75%  { transform: translate(-3px, 3px) rotate(-0.1deg); }
+    90%  { transform: translate(3px, -1px) rotate(0.1deg); }
+  }
+  #red-bleed {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    pointer-events: none;
+    background: #cc0000;
+    opacity: 0;
+  }
+
+  /* Status bar */
+  #statusbar {
+    background: var(--dark-green);
+    padding: 5px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--bg);
+    background: var(--green);
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  #statusbar span { opacity: 0.85; }
+  #statusbar .sep { opacity: 0.4; margin: 0 8px; }
+
+  /* Mobile tweaks */
+  @media (max-width: 600px) {
+    #matrix { display: none; }
+    .line { font-size: 13px; }
+    #output { padding: 14px 14px 8px; }
+    #input-row { padding: 8px 14px 12px; }
+    #statusbar { padding: 5px 14px; font-size: 10px; }
+    .title-text { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+
+<!-- Close confirmation modal -->
+<div id="close-modal">
+  <div class="modal-box">
+    <h3>Close this tab?</h3>
+    <p>
+      Browsers block scripts from closing tabs they didn't open.<br>
+      Press <kbd>Cmd W</kbd> (Mac) or <kbd>Ctrl W</kbd> (Windows) to close.
+    </p>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" id="modal-cancel">Cancel</button>
+      <button class="modal-btn confirm" id="modal-confirm">Try anyway</button>
+    </div>
+  </div>
+</div>
+
+<div id="terminal-window">
+  <div id="titlebar">
+    <div class="dots">
+      <div class="dot red"></div>
+      <div class="dot yellow"></div>
+      <div class="dot green"></div>
+    </div>
+    <div class="title-text">abishek@portfolio: ~</div>
+  </div>
+
+  <div id="output"></div>
+
+  <div id="input-row">
+    <span id="input-prefix">abishek@portfolio:~$&nbsp;</span>
+    <input id="cmd-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="">
+  </div>
+
+  <div id="statusbar">
+    <span>Abishek Puri &nbsp;<span class="sep">·</span>&nbsp; San Marcos, TX</span>
+    <span id="clock"></span>
+  </div>
+</div>
+
+<script>
+/* ── Matrix rain ─────────────────────────────────────────────── */
+(function() {
+  const canvas = document.getElementById('matrix');
+  const ctx = canvas.getContext('2d');
+  let cols, drops;
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン01';
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    cols  = Math.floor(canvas.width / 16);
+    drops = Array(cols).fill(1);
+  }
+
+  function draw() {
+    ctx.fillStyle = 'rgba(10,10,15,0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#00ff9f';
+    ctx.font = '14px monospace';
+    drops.forEach((y, i) => {
+      const ch = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(ch, i * 16, y * 16);
+      if (y * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    });
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  setInterval(draw, 50);
+})();
+
+/* ── Clock ───────────────────────────────────────────────────── */
+(function() {
+  const el = document.getElementById('clock');
+  function tick() {
+    el.textContent = new Date().toLocaleTimeString('en-US', {hour12: false});
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+
+/* ── Terminal engine ─────────────────────────────────────────── */
+const output   = document.getElementById('output');
+const input    = document.getElementById('cmd-input');
+const inputRow = document.getElementById('input-row');
+
+inputRow.style.display = 'none'; // hidden during autoplay
+
+let history = [], histIdx = -1;
+let awaitingRiddle  = false;
+let hackdevUnlocked = false;
+
+function startRedBleed() {
+  const bleed = document.createElement('div');
+  bleed.id = 'red-bleed';
+  document.body.appendChild(bleed);
+  bleed.style.animation = 'bleedIn 1.2s ease forwards';
+  termWin.style.animation = 'screenShake 0.4s ease infinite';
+
+  setTimeout(() => {
+    termWin.style.animation = '';
+    bleed.style.animation = 'bleedOut 1.2s ease forwards';
+    setTimeout(() => {
+      bleed.remove();
+      blank();
+      addLine('  <span style="color:var(--dim)">nice try.</span>');
+      blank();
+      addLine('  <span style="color:var(--green);font-weight:700;font-size:20px;">hire me.</span>');
+      addLine('  resume: <a class="out-link" href="./RESUME.pdf" target="_blank">RESUME.pdf</a>');
+      addLine('  email:  <a class="out-link" href="mailto:abishekpuri77@gmail.com">abishekpuri77@gmail.com</a>');
+      blank();
+    }, 1200);
+  }, 5000);
+}
+
+function scrollBottom() {
+  output.scrollTop = output.scrollHeight;
+}
+
+function addLine(text, cls = 'output-line') {
+  const div = document.createElement('div');
+  div.className = 'line ' + cls;
+  div.innerHTML = text;
+  output.appendChild(div);
+  scrollBottom();
+  return div;
+}
+
+function blank() { addLine('', 'blank'); }
+
+function manPage(name, desc, synopsis, description) {
+  blank();
+  addLine(`  <span style="color:var(--green);font-weight:700">${name.toUpperCase()}(1)</span>`, 'output-line');
+  blank();
+  addLine('  <span style="color:var(--green)">NAME</span>');
+  addLine(`      ${name} — ${desc}`);
+  blank();
+  addLine('  <span style="color:var(--green)">SYNOPSIS</span>');
+  addLine(`      ${synopsis}`);
+  blank();
+  addLine('  <span style="color:var(--green)">DESCRIPTION</span>');
+  addLine(`      ${description}`);
+  blank();
+  addLine('  <span style="color:var(--green)">EXAMPLES</span>');
+  addLine(`      $ ${synopsis.split(' ')[0] === name ? synopsis : name}`);
+  blank();
+}
+
+/* ── Command responses ───────────────────────────────────────── */
+function renderHelp(all) {
+  blank();
+  const essential = [
+    ['whoami',       'bio & background'],
+    ['projects',     'list all projects'],
+    ['skills',       'tech skills'],
+    ['experience',   'work history'],
+    ['now',          'what I\'m building right now'],
+    ['contact',      'get in touch'],
+    ['status',       'availability'],
+    ['sudo hire-me', '...'],
+  ];
+  const rest = [
+    ['cat puripy',       'PuriPy details + link'],
+    ['cat astralecture', 'Astralecture details + link'],
+    ['cat ragchatbot',   'RAG Chatbot details + link'],
+    ['tree',             'project directory tree'],
+    ['uses',             'daily dev setup'],
+    ['history',          'command history'],
+    ['man <command>',    'detailed docs'],
+    ['theme <name>',     'default · amber · matrix · solar'],
+    ['open github',      'open github profile'],
+    ['open linkedin',    'open linkedin profile'],
+    ['open resume',      'open resume PDF'],
+    ['secret key',       '[CLASSIFIED]'],
+    ['clear',            'clear terminal'],
+    ['hello',            'say hi'],
+  ];
+  const list = all ? [...essential, ...rest] : essential;
+  addLine(all ? 'all commands:' : 'commands:', 'highlight');
+  blank();
+  list.forEach(([cmd, desc]) => {
+    addLine(`  <span style="color:var(--green);min-width:200px;display:inline-block">${cmd}</span><span style="color:var(--dim)">— ${desc}</span>`);
+  });
+  blank();
+  if (!all) addLine('  <span style="color:var(--dim)">type <span style="color:var(--green);font-weight:700">help --all</span> for full command list</span>');
+  addLine('  <span style="color:var(--dim)">tip: press <span style="color:var(--green)">Tab</span> to autocomplete</span>');
+  blank();
+}
+
+const responses = {
+  help()        { renderHelp(false); },
+  'help --all'(){ renderHelp(true);  },
+
+  whoami() {
+    blank();
+    addLine('  Abishek Puri', 'highlight');
+    addLine('  CS + Data Analytics @ Texas State University');
+    addLine('  Class of 2028 · GPA 3.7 · Dean\'s List · Honors College');
+    addLine('  Building tools engineers actually use.');
+    blank();
+  },
+
+  projects() {
+    blank();
+    addLine('  projects/', 'highlight');
+    blank();
+    addLine('  [1] PuriPy          — time-travel debugger for Python');
+    addLine('  [2] Astralecture     — real-time 3D solar system (Three.js, 60 FPS)');
+    addLine('  [3] RAG Chatbot      — document Q&A with FAISS vector search');
+    blank();
+    addLine('  run <span style="color:var(--green)">cat &lt;project&gt;</span> for details', 'output-line');
+    blank();
+  },
+
+  'cat puripy'() {
+    blank();
+    addLine('  PuriPy', 'highlight');
+    addLine('  ──────────────────────────────────────────────');
+    addLine('  Record any Python script\'s full execution, then step backward');
+    addLine('  through every variable change. Built on sys.settrace with delta');
+    addLine('  encoding (9x compression), O(1) navigation, Textual TUI, and');
+    addLine('  an AI query layer using Gemini.');
+    blank();
+    addLine('  → <a class="out-link" href="https://github.com/ivakehs77/puripy" target="_blank">github.com/ivakehs77/puripy</a>');
+    blank();
+  },
+
+  'cat astralecture'() {
+    blank();
+    addLine('  Astralecture', 'highlight');
+    addLine('  ──────────────────────────────────────────────');
+    addLine('  Real-time 3D solar system simulator running at 60 FPS.');
+    addLine('  Built with Three.js — accurate orbital mechanics, texture');
+    addLine('  maps, and interactive camera controls. Deployed live.');
+    blank();
+    addLine('  → <a class="out-link" href="https://www.astralecture.org/" target="_blank">astralecture.org</a>');
+    blank();
+  },
+
+  'cat ragchatbot'() {
+    blank();
+    addLine('  RAG Chatbot', 'highlight');
+    addLine('  ──────────────────────────────────────────────');
+    addLine('  Document Q&A system using retrieval-augmented generation.');
+    addLine('  Embeds documents into FAISS vector store, retrieves relevant');
+    addLine('  chunks at query time, feeds to an LLM for grounded answers.');
+    blank();
+    addLine('  → <a class="out-link" href="https://rag-knowledge-chatbot.streamlit.app/" target="_blank">rag-knowledge-chatbot.streamlit.app</a>');
+    blank();
+  },
+
+  skills() {
+    blank();
+    addLine('  technical skills', 'highlight');
+    blank();
+    addLine('  Languages     Python · JavaScript · Java · SQL · C · HTML/CSS');
+    addLine('  AI / ML       LLMs · RAG · FAISS · Gemini API · sys.settrace');
+    addLine('  Frontend      Three.js · Textual TUI · Vanilla JS');
+    addLine('  Tools         Git · Linux · VS Code · Jupyter · Streamlit');
+    addLine('  Data          Pandas · NumPy · Matplotlib · Delta encoding');
+    blank();
+  },
+
+  experience() {
+    blank();
+    addLine('  experience', 'highlight');
+    blank();
+    addLine('  Research IT Assistant                        Nov 2025 — Present', 'highlight');
+    addLine('  Texas State Division of Research · San Marcos, TX');
+    blank();
+    addLine('  · Built & deployed a full-stack FAQ chatbot (FastAPI + JS widget)');
+    addLine('    handling 50+ live research queries, embedded via a single &lt;script&gt; tag.');
+    addLine('  · Architected REST API with input validation and structured error handling');
+    addLine('    to mitigate injection-style vulnerabilities.');
+    addLine('  · Owned full release cycle: backend (Render) + frontend (Vercel)');
+    addLine('    with configurable CORS and API base URL for multi-department reuse.');
+    blank();
+    addLine('  Peer Tutor', 'highlight');
+    addLine('  Texas State University · San Marcos, TX');
+    addLine('  · Tutoring CS and Data Analytics — algorithms, data structures,');
+    addLine('    Python, and foundational math.');
+    blank();
+  },
+
+  contact() {
+    blank();
+    addLine('  contact', 'highlight');
+    blank();
+    addLine('  Email      <a class="out-link" href="mailto:abishekpuri77@gmail.com">abishekpuri77@gmail.com</a>');
+    addLine('  GitHub     <a class="out-link" href="https://github.com/ivakehs77" target="_blank">github.com/ivakehs77</a>');
+    addLine('  LinkedIn   <a class="out-link" href="https://www.linkedin.com/in/abishek-puri-9a6652303/" target="_blank">linkedin.com/in/abishek-puri</a>');
+    addLine('  Handshake  <span style="color:var(--dim)">(available on request)</span>');
+    addLine('  Resume     <a class="out-link" href="./RESUME.pdf" target="_blank">open resume</a> &nbsp;<span style="color:var(--dim)">· or type \'open resume\'</span>');
+    blank();
+  },
+
+  status() {
+    blank();
+    addLine('  status', 'highlight');
+    blank();
+    addLine('  Availability   Open to SWE internships' );
+    addLine('  Location       San Marcos, TX');
+    addLine('  Email          <a class="out-link" href="mailto:abishekpuri77@gmail.com">abishekpuri77@gmail.com</a>');
+    blank();
+  },
+
+  'open github'() {
+    window.open('https://github.com/ivakehs77', '_blank');
+    blank();
+    addLine('  opening github.com/ivakehs77 ...');
+    blank();
+  },
+
+  'open linkedin'() {
+    window.open('https://www.linkedin.com/in/abishek-puri-9a6652303/', '_blank');
+    blank();
+    addLine('  opening linkedin ...');
+    blank();
+  },
+
+  'open resume'() {
+    window.open('./RESUME.pdf', '_blank');
+    blank();
+    addLine('  opening resume ...');
+    blank();
+  },
+
+  tree() {
+    blank();
+    addLine('  abishek@portfolio:~/', 'highlight');
+    addLine('  ├── projects/');
+    addLine('  │   ├── puripy/          <span style="color:var(--dim)">[Python · sys.settrace · Gemini · Textual]</span>');
+    addLine('  │   ├── astralecture/    <span style="color:var(--dim)">[Three.js · Vite · Web Audio API · Vercel]</span>');
+    addLine('  │   └── ragchatbot/      <span style="color:var(--dim)">[Python · FAISS · OpenAI · Streamlit]</span>');
+    addLine('  ├── experience/');
+    addLine('  │   ├── research-it/     <span style="color:var(--dim)">[FastAPI · JS · Render · Vercel · Nov 2025–]</span>');
+    addLine('  │   └── peer-tutor/      <span style="color:var(--dim)">[CS · Data Structures · Python · Math]</span>');
+    addLine('  └── education/');
+    addLine('      └── txstate/         <span style="color:var(--dim)">[CS + Data Analytics · GPA 3.7 · Class of 2028]</span>');
+    blank();
+  },
+
+  history() {
+    blank();
+    if (history.length === 0) {
+      addLine('  no commands in history yet.');
+    } else {
+      history.slice().reverse().forEach((cmd, i) => {
+        addLine(`  <span style="color:var(--dim)">${String(i + 1).padStart(3)}  </span>${cmd}`);
+      });
+    }
+    blank();
+  },
+
+  'man whoami'()        { manPage('whoami',       'display identity information', 'whoami', 'Shows personal bio, education, GPA, and current focus area.'); },
+  'man projects'()      { manPage('projects',     'list all projects', 'projects', 'Displays all projects with a brief description. Use cat <name> to drill in.'); },
+  'man skills'()        { manPage('skills',       'display technical skills', 'skills', 'Lists skills grouped by category: Languages, Frameworks, AI/ML, Databases, Concepts.'); },
+  'man experience'()    { manPage('experience',   'display work experience', 'experience', 'Shows work history with bullet-point accomplishments drawn from resume.'); },
+  'man contact'()       { manPage('contact',      'display contact information', 'contact', 'Shows all contact channels: email, GitHub, LinkedIn, Handshake, resume.'); },
+  'man status'()        { manPage('status',       'show availability and location', 'status', 'Shows current job search status, location, and preferred contact.'); },
+  'man cat'()           { manPage('cat',          'display project details', 'cat <project>', 'Supported projects: puripy, astralecture, ragchatbot. Shows stack, description, links.'); },
+  'man open'()          { manPage('open',         'open external link', 'open <target>', 'Supported targets: github, linkedin, resume. Opens in a new tab.'); },
+  'man tree'()          { manPage('tree',         'show project directory tree', 'tree', 'Renders a visual filesystem tree of all projects, experience, and education.'); },
+  'man history'()       { manPage('history',      'show command history', 'history', 'Lists all commands entered this session in order, oldest to newest.'); },
+  'man clear'()         { manPage('clear',        'clear terminal output', 'clear', 'Clears all output from the terminal. Does not affect command history.'); },
+  'man help'()          { manPage('help',         'list all commands', 'help', 'Shows the full command list with descriptions. You\'re clearly good at this.'); },
+
+  'sudo hire-me'() {
+    blank();
+    addLine('  [sudo] password for abishek: <span style="color:var(--dim)">············</span>');
+    blank();
+    setTimeout(() => {
+      addLine('  verifying credentials ...');
+      setTimeout(() => {
+        addLine('  <span style="color:var(--green)">████████████████████</span> 100%');
+        blank();
+        setTimeout(() => {
+          addLine('  ╔══════════════════════════════════════════╗', 'highlight');
+          addLine('  ║           ACCESS GRANTED                 ║', 'highlight');
+          addLine('  ╚══════════════════════════════════════════╝', 'highlight');
+          blank();
+          addLine('  Abishek Puri — available for SWE internships');
+          addLine('  Summer / Fall 2026 · San Marcos, TX');
+          blank();
+          addLine('  → <a class="out-link" href="mailto:abishekpuri77@gmail.com">abishekpuri77@gmail.com</a>');
+          addLine('  → <a class="out-link" href="https://github.com/ivakehs77" target="_blank">github.com/ivakehs77</a>');
+          blank();
+        }, 600);
+      }, 700);
+    }, 400);
+  },
+
+  sudo() {
+    blank();
+    addLine('  [sudo] password for abishek: <span style="color:var(--dim)">············</span>');
+    blank();
+    addLine('  <span style="color:var(--red)">permission denied</span> — try <span style="color:var(--green)">sudo hire-me</span> instead.');
+    blank();
+  },
+
+  man() {
+    blank();
+    addLine('  usage: man &lt;command&gt;');
+    blank();
+    addLine('  documented commands:');
+    addLine('  <span style="color:var(--green)">whoami · projects · skills · experience · contact</span>');
+    addLine('  <span style="color:var(--green)">status · apply · cat · open · tree · history · clear · help</span>');
+    blank();
+  },
+
+  theme() {
+    blank();
+    addLine('  usage: theme &lt;name&gt;');
+    blank();
+    addLine('  available themes:');
+    addLine('  <span style="color:#00ff9f">■</span>  default  — classic green on black');
+    addLine('  <span style="color:#ffb347">■</span>  amber   — warm orange terminal');
+    addLine('  <span style="color:#00ff00">■</span>  matrix  — deep green, high contrast');
+    addLine('  <span style="color:#268bd2">■</span>  solar   — light mode');
+    blank();
+  },
+
+  'theme default'() { applyTheme('default'); },
+  'theme amber'()   { applyTheme('amber');   },
+  'theme matrix'()  { applyTheme('matrix');  },
+  'theme solar'()   { applyTheme('solar');   },
+  default()         { applyTheme('default'); },
+  amber()           { applyTheme('amber');   },
+  matrix()          { applyTheme('matrix');  },
+  solar()           { applyTheme('solar');   },
+
+  'secret key'() {
+    blank();
+    addLine('  ┌─────────────────────────────────────────┐', 'highlight');
+    addLine('  │         C L A S S I F I E D             │', 'highlight');
+    addLine('  └─────────────────────────────────────────┘', 'highlight');
+    blank();
+    addLine('  Solve this to unlock the secret command:');
+    blank();
+    addLine('  <span style="color:var(--green);font-size:20px;font-weight:700;letter-spacing:0.1em">  0^0 = ?</span>');
+    blank();
+    addLine('  <span style="color:var(--dim)">(type your answer)</span>');
+    blank();
+    awaitingRiddle = true;
+  },
+
+  hackdev() {
+    if (!hackdevUnlocked) {
+      blank();
+      addLine('  <span class="error">command not found: hackdev</span>  type <span style="color:var(--green)">help</span> for available commands');
+      blank();
+      return;
+    }
+    blank();
+    addLine('  <span style="color:#ff2222;font-weight:700;font-size:15px;">INITIATING BREACH SEQUENCE ...</span>');
+    blank();
+    setTimeout(() => addLine('  <span style="color:#ff4444">[!!] FIREWALL BYPASSED</span>'), 400);
+    setTimeout(() => addLine('  <span style="color:#ff4444">[!!] ENCRYPTION BROKEN</span>'), 900);
+    setTimeout(() => addLine('  <span style="color:#ff2222;font-weight:700">ACCESS GRANTED — root@abishek-portfolio</span>'), 1400);
+    setTimeout(() => {
+      blank();
+      startRedBleed();
+    }, 1700);
+  },
+
+  now() {
+    blank();
+    addLine('  what I\'m working on', 'highlight');
+    blank();
+    addLine('  → PuriPy v2 — adding collaborative debugging sessions');
+    addLine('  → grinding more LeetCode: trees, graphs, dynamic programming');
+    addLine('  → reading "Designing Data-Intensive Applications"');
+    addLine('  → applying for SWE internships · Summer/Fall');
+    blank();
+    addLine('  <span style="color:var(--dim)">updated May 2026</span>');
+    blank();
+  },
+
+  uses() {
+    blank();
+    addLine('  daily setup', 'highlight');
+    blank();
+    addLine('  OS        macOS');
+    addLine('  Editor    VS Code — JetBrains Mono, dark theme');
+    addLine('  Terminal  zsh · this portfolio is my terminal lol');
+    addLine('  Browser   Chrome (DevTools power user)');
+    blank();
+    addLine('  Languages  Python · JavaScript · TypeScript · Java');
+    addLine('  Stack      FastAPI · React · Next.js · Three.js');
+    addLine('  AI         Claude · Gemini API · OpenAI API · FAISS');
+    addLine('  Deploy     Vercel · Render · GitHub Actions');
+    blank();
+  },
+
+  hello() {
+    blank();
+    addLine('  hey! glad you\'re exploring. try <span style="color:var(--green)">whoami</span> or <span style="color:var(--green)">projects</span> to dig in.');
+    blank();
+  },
+
+  'cat rag chatbot'() { responses['cat ragchatbot'](); },
+  'cat rag'()         { responses['cat ragchatbot'](); },
+  'cat puri'()        { responses['cat puripy'](); },
+  'cat astral'()      { responses['cat astralecture'](); },
+
+  hi() { responses.hello(); },
+
+  clear() {
+    output.innerHTML = '';
+  },
+};
+
+/* ── Auto-play sequence ──────────────────────────────────────── */
+const autoplay = [
+  { cmd: 'whoami', delay: 600 },
+  { cmd: 'ls projects/', delay: 900 },
+  { cmd: 'cat projects/puripy', display: 'cat puripy', delay: 800 },
+  { cmd: 'status', delay: 700 },
+];
+
+let skipAutoplay = false;
+let autoplayDone = false;
+
+function sleep(ms) {
+  return skipAutoplay ? Promise.resolve() : new Promise(r => setTimeout(r, ms));
+}
+
+function randDelay(base, variance) {
+  return base + (Math.random() - 0.5) * variance;
+}
+
+async function typeCommand(text) {
+  const promptDiv = document.createElement('div');
+  promptDiv.className = 'line prompt-line';
+  const prefix = document.createElement('span');
+  prefix.className = 'prompt-prefix';
+  prefix.textContent = 'abishek@portfolio:~$ ';
+  const typed = document.createElement('span');
+  const cursor = document.createElement('span');
+  cursor.id = 'autoplay-cursor';
+  promptDiv.appendChild(prefix);
+  promptDiv.appendChild(typed);
+  promptDiv.appendChild(cursor);
+  output.appendChild(promptDiv);
+  scrollBottom();
+
+  if (skipAutoplay) {
+    typed.textContent = text;
+  } else {
+    for (let i = 0; i < text.length; i++) {
+      if (skipAutoplay) { typed.textContent = text; break; }
+      typed.textContent += text[i];
+      scrollBottom();
+      await sleep(randDelay(55, 40));
+    }
+  }
+
+  await sleep(200);
+  cursor.remove();
+  return promptDiv;
+}
+
+function onEscSkip(e) {
+  if (e.key === 'Escape' && !autoplayDone) skipAutoplay = true;
+}
+document.addEventListener('keydown', onEscSkip);
+
+async function runAutoplay() {
+  await sleep(500);
+
+  for (const step of autoplay) {
+    await typeCommand(step.cmd);
+    const key = step.display || step.cmd;
+    if (responses[key]) {
+      await sleep(120);
+      responses[key]();
+    }
+    await sleep(step.delay);
+  }
+
+  await sleep(400);
+  blank();
+  addLine('  Type <span style="color:var(--green)">help</span> to explore further<span id="autoplay-cursor"></span>', 'output-line');
+  blank();
+  await sleep(200);
+
+  autoplayDone = true;
+  inputRow.style.display = 'flex';
+  input.focus();
+
+  // Restore saved theme
+  const savedTheme = localStorage.getItem('portfolio-theme');
+  if (savedTheme && savedTheme !== 'default') applyTheme(savedTheme, true);
+
+  // Deep link: ?cmd=whoami
+  const urlCmd = new URLSearchParams(window.location.search).get('cmd');
+  if (urlCmd) {
+    const k = urlCmd.toLowerCase();
+    const promptDiv = document.createElement('div');
+    promptDiv.className = 'line prompt-line';
+    promptDiv.innerHTML = `<span class="prompt-prefix">abishek@portfolio:~$&nbsp;</span>${escHtml(urlCmd)}`;
+    output.appendChild(promptDiv);
+    scrollBottom();
+    if (responses[k]) responses[k]();
+  }
+}
+
+runAutoplay();
+
+/* ── Themes ──────────────────────────────────────────────────── */
+const THEMES = {
+  default: { bg:'#0a0a0f', green:'#00ff9f', dim:'#5a8a6a', darkGreen:'#003d26', surface:'#1a1a24', statusText:'#0a0a0f', statusBg:'#00ff9f' },
+  amber:   { bg:'#0f0800', green:'#ffb347', dim:'#8a6030', darkGreen:'#3d1a00', surface:'#1a0e00', statusText:'#0f0800', statusBg:'#ffb347' },
+  matrix:  { bg:'#000800', green:'#00ff00', dim:'#008800', darkGreen:'#003300', surface:'#001800', statusText:'#000800', statusBg:'#00ff00' },
+  solar:   { bg:'#fdf6e3', green:'#268bd2', dim:'#93a1a1', darkGreen:'#eee8d5', surface:'#e8e2d4', statusText:'#fdf6e3', statusBg:'#268bd2' },
+};
+
+function applyTheme(name, silent = false) {
+  const t = THEMES[name];
+  if (!t) {
+    blank();
+    addLine(`  unknown theme. available: <span style="color:var(--green)">default · amber · matrix · solar</span>`);
+    blank();
+    return;
+  }
+  const r = document.documentElement.style;
+  r.setProperty('--bg',         t.bg);
+  r.setProperty('--green',      t.green);
+  r.setProperty('--dim',        t.dim);
+  r.setProperty('--dark-green', t.darkGreen);
+  r.setProperty('--surface',    t.surface);
+  document.getElementById('statusbar').style.background = t.statusBg;
+  document.getElementById('statusbar').style.color      = t.statusText;
+  document.getElementById('matrix').style.display = (name === 'solar') ? 'none' : '';
+  localStorage.setItem('portfolio-theme', name);
+  if (!silent) {
+    blank();
+    addLine(`  theme set to <span style="color:var(--green)">${name}</span>`);
+    blank();
+  }
+}
+
+/* ── Konami code ─────────────────────────────────────────────── */
+const KONAMI_SEQ = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let konamiIdx = 0;
+document.addEventListener('keydown', e => {
+  if (e.key === KONAMI_SEQ[konamiIdx]) {
+    konamiIdx++;
+    if (konamiIdx === KONAMI_SEQ.length) {
+      konamiIdx = 0;
+      output.innerHTML = '';
+      blank();
+      addLine('  ↑ ↑ ↓ ↓ ← → ← → B A', 'highlight');
+      blank();
+      addLine('  ██████╗ ██╗   ██╗ ██████╗ ██████╗ ███████╗██████╗ ██╗', 'highlight');
+      addLine('  ██╔══██╗██║   ██║██╔════╝ ██╔══██╗██╔════╝██╔══██╗██║', 'highlight');
+      addLine('  ██████╔╝██║   ██║██║  ███╗██║  ██║█████╗  ██║  ██║██║', 'highlight');
+      addLine('  ██╔══██╗██║   ██║██║   ██║██║  ██║██╔══╝  ██║  ██║╚═╝', 'highlight');
+      addLine('  ██████╔╝╚██████╔╝╚██████╔╝██████╔╝███████╗██████╔╝██╗', 'highlight');
+      addLine('  ╚═════╝  ╚═════╝  ╚═════╝ ╚═════╝ ╚══════╝╚═════╝ ╚═╝', 'highlight');
+      blank();
+      addLine('  you know the Konami code.');
+      addLine('  that\'s the kind of curiosity I bring to every problem.');
+      blank();
+      addLine('  — Abishek Puri');
+      addLine('    <a class="out-link" href="mailto:abishekpuri77@gmail.com">abishekpuri77@gmail.com</a>');
+      addLine('    <a class="out-link" href="https://github.com/ivakehs77" target="_blank">github.com/ivakehs77</a>');
+      blank();
+    }
+  } else {
+    konamiIdx = (e.key === KONAMI_SEQ[0]) ? 1 : 0;
+  }
+});
+
+/* ── Tab autocomplete ────────────────────────────────────────── */
+const COMMANDS = [
+  'help','help --all','whoami','projects','skills','experience','tree','contact','status',
+  'now','uses','history','clear','hello','hi',
+  'cat puripy','cat astralecture','cat ragchatbot',
+  'open github','open linkedin','open resume',
+  'sudo hire-me','sudo',
+  'man','man whoami','man projects','man skills','man experience','man contact',
+  'man status','man cat','man open','man tree','man history','man clear','man help',
+  'theme','theme default','theme amber','theme matrix','theme solar',
+  'secret key',
+];
+
+/* ── Interactive input ───────────────────────────────────────── */
+input.addEventListener('keydown', e => {
+  // Bash-style shortcuts
+  if (e.ctrlKey && e.key === 'l') { e.preventDefault(); responses.clear(); return; }
+  if (e.ctrlKey && e.key === 'u') { e.preventDefault(); input.value = ''; return; }
+  if (e.ctrlKey && e.key === 'c') {
+    e.preventDefault();
+    const val = input.value;
+    input.value = '';
+    if (val) addLine(`<span class="prompt-prefix">abishek@portfolio:~$&nbsp;</span>${escHtml(val)}<span style="color:var(--dim)">^C</span>`, 'prompt-line');
+    return;
+  }
+
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const val = input.value.toLowerCase().trimStart();
+    if (!val) return;
+    const matches = COMMANDS.filter(c => c.startsWith(val));
+    if (matches.length === 1) {
+      input.value = matches[0];
+    } else if (matches.length > 1) {
+      blank();
+      addLine('  ' + matches.join('    '));
+      blank();
+    }
+    return;
+  }
+
+  if (e.key === 'Enter') {
+    const raw = input.value.trim();
+    if (!raw) return;
+    input.value = '';
+
+    // Echo command
+    const promptDiv = document.createElement('div');
+    promptDiv.className = 'line prompt-line';
+    promptDiv.innerHTML = `<span class="prompt-prefix">abishek@portfolio:~$&nbsp;</span>${escHtml(raw)}`;
+    output.appendChild(promptDiv);
+    scrollBottom();
+
+    // History
+    history.unshift(raw);
+    if (history.length > 100) history.pop();
+    histIdx = -1;
+
+    // Riddle interceptor
+    if (awaitingRiddle) {
+      const ans = raw.toLowerCase().trim();
+      if (ans === '1' || ans === 'one') {
+        awaitingRiddle   = false;
+        hackdevUnlocked  = true;
+        blank();
+        addLine('  <span style="color:var(--green)">✓ correct.</span>', 'output-line');
+        blank();
+        addLine('  secret command unlocked.');
+        blank();
+        const big = document.createElement('div');
+        big.className = 'line output-line';
+        big.innerHTML = '  <span style="font-size:23px;font-weight:700;color:var(--green)">try "hackdev" to hack this website</span>';
+        output.appendChild(big);
+        scrollBottom();
+        blank();
+      } else {
+        blank();
+        addLine('  <span class="error">wrong.</span> <span style="color:var(--dim)">hint: 0^0 is a classic CS debate — but the answer here is a single digit.</span>');
+        blank();
+      }
+      return;
+    }
+
+    // Run
+    const key = raw.toLowerCase();
+    if (responses[key]) {
+      responses[key]();
+    } else if (key.startsWith('man ')) {
+      blank();
+      addLine(`  <span style="color:var(--dim)">no manual entry for "${escHtml(raw.slice(4))}".</span>`);
+      addLine(`  try: <span style="color:var(--green)">man help</span> for a list of documented commands.`);
+      blank();
+    } else if (key.startsWith('theme ')) {
+      applyTheme(key.slice(6).trim());
+    } else {
+      blank();
+      addLine(`  <span class="error">command not found: ${escHtml(raw)}</span>  type <span style="color:var(--green)">help</span> for available commands`);
+      blank();
+    }
+  }
+
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (histIdx < history.length - 1) {
+      histIdx++;
+      input.value = history[histIdx];
+      setTimeout(() => input.setSelectionRange(input.value.length, input.value.length), 0);
+    }
+  }
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (histIdx > 0) {
+      histIdx--;
+      input.value = history[histIdx];
+    } else {
+      histIdx = -1;
+      input.value = '';
+    }
+  }
+});
+
+// Keep input focused when clicking anywhere in the terminal
+document.getElementById('output').addEventListener('click', e => {
+  if (!window.getSelection().toString()) input.focus();
+});
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Window buttons ──────────────────────────────────────────── */
+const termWin    = document.getElementById('terminal-window');
+const closeModal = document.getElementById('close-modal');
+
+// Red — show close modal
+document.querySelector('.dot.red').addEventListener('click', () => {
+  closeModal.classList.add('show');
+});
+
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  closeModal.classList.remove('show');
+});
+
+document.getElementById('modal-confirm').addEventListener('click', () => {
+  closeModal.classList.remove('show');
+  window.close();
+  // window.close() silently fails for user-opened tabs — surface the shortcut
+  setTimeout(() => {
+    blank();
+    addLine('  <span style="color:var(--dim)">Browser blocked the close. Use your keyboard shortcut:</span>');
+    addLine('  <span style="color:var(--green)">Cmd+W</span> on Mac &nbsp;·&nbsp; <span style="color:var(--green)">Ctrl+W</span> on Windows');
+    blank();
+  }, 150);
+});
+
+closeModal.addEventListener('click', e => {
+  if (e.target === closeModal) closeModal.classList.remove('show');
+});
+
+// Yellow — toggle minimize
+let isMinimized = false;
+
+function setMinimized(val) {
+  isMinimized = val;
+  termWin.classList.toggle('minimized', isMinimized);
+  if (!isMinimized) setTimeout(() => input.focus(), 380);
+}
+
+document.querySelector('.dot.yellow').addEventListener('click', () => {
+  setMinimized(!isMinimized);
+});
+
+document.getElementById('titlebar').addEventListener('click', e => {
+  if (isMinimized && !e.target.closest('.dot')) setMinimized(false);
+});
+
+// Green — toggle fullscreen
+document.querySelector('.dot.green').addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+});
+</script>
+</body>
+</html>
