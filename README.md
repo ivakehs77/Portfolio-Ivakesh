@@ -2,7 +2,7 @@
 
 > An interactive, terminal-based personal portfolio. Built to showcase my projects, experience, and love for building things from scratch. 
 
-**[View the Live Site Here]** 
+**[View the Live Site Here- https://ivakesh.dev/]** 
 
 I wanted to build a highly polished, interactive portfolio without relying on bloated frameworks like React for what is essentially a static site. This entire project runs on vanilla HTML, CSS, and JavaScript, living inside a single file with zero dependencies and no build step.
 
