@@ -437,33 +437,6 @@
     50%       { opacity: 0; }
   }
 
-  @keyframes bleedIn {
-    0%   { opacity: 0; }
-    20%  { opacity: 0.55; }
-    60%  { opacity: 0.82; }
-    100% { opacity: 0.9; }
-  }
-  @keyframes bleedOut {
-    0%   { opacity: 0.9; }
-    100% { opacity: 0; }
-  }
-  @keyframes screenShake {
-    0%,100% { transform: translate(0,0) rotate(0deg); }
-    15%  { transform: translate(-5px, 3px) rotate(-0.3deg); }
-    30%  { transform: translate(5px, -3px) rotate(0.3deg); }
-    45%  { transform: translate(-4px, 4px) rotate(-0.2deg); }
-    60%  { transform: translate(4px, -2px) rotate(0.2deg); }
-    75%  { transform: translate(-3px, 3px) rotate(-0.1deg); }
-    90%  { transform: translate(3px, -1px) rotate(0.1deg); }
-  }
-  #red-bleed {
-    position: fixed;
-    inset: 0;
-    z-index: 5000;
-    pointer-events: none;
-    background: #cc0000;
-    opacity: 0;
-  }
 
   /* Status bar */
   #statusbar {
@@ -640,31 +613,7 @@ const inputRow = document.getElementById('input-row');
 inputRow.style.display = 'none'; // hidden during autoplay
 
 let history = [], histIdx = -1;
-let awaitingRiddle  = false;
-let hackdevUnlocked = false;
-
-function startRedBleed() {
-  const bleed = document.createElement('div');
-  bleed.id = 'red-bleed';
-  document.body.appendChild(bleed);
-  bleed.style.animation = 'bleedIn 1.2s ease forwards';
-  termWin.style.animation = 'screenShake 0.4s ease infinite';
-
-  setTimeout(() => {
-    termWin.style.animation = '';
-    bleed.style.animation = 'bleedOut 1.2s ease forwards';
-    setTimeout(() => {
-      bleed.remove();
-      blank();
-      addLine('  <span style="color:var(--dim)">nice try.</span>');
-      blank();
-      addLine('  <span style="color:var(--green);font-weight:700;font-size:20px;">hire me.</span>');
-      addLine('  resume: <a class="out-link" href="./RESUME.pdf" target="_blank">RESUME.pdf</a>');
-      addLine('  email:  <a class="out-link" href="mailto:abishekpuri77@gmail.com">abishekpuri77@gmail.com</a>');
-      blank();
-    }, 1200);
-  }, 5000);
-}
+let snakeActive = false, snakeKeyHandler = null;
 
 function scrollBottom() {
   output.scrollTop = output.scrollHeight;
@@ -724,7 +673,7 @@ function renderHelp() {
     ['open github',      'open github profile'],
     ['open linkedin',    'open linkedin profile'],
     ['open resume',      'open resume PDF'],
-    ['secret key',       '[CLASSIFIED]'],
+    ['snake',             'play snake in the terminal'],
     ['↑↑↓↓←→←→BA',      'konami code'],
     ['clear',            'clear terminal'],
     ['revert',           'undo last clear'],
@@ -985,38 +934,88 @@ const responses = {
   classic()         { applyTheme('classic'); },
   solar()           { applyTheme('default'); },
 
-  'secret key'() {
+  snake() {
+    if (snakeActive) return;
     blank();
-    addLine('  ┌─────────────────────────────────────────┐', 'highlight');
-    addLine('  │         C L A S S I F I E D             │', 'highlight');
-    addLine('  └─────────────────────────────────────────┘', 'highlight');
+    addLine('  <span style="color:var(--dim)">arrow keys to move · q to quit · good luck</span>');
     blank();
-    addLine('  Solve this to unlock the secret command:');
-    blank();
-    addLine('  <span style="color:var(--green);font-size:20px;font-weight:700;letter-spacing:0.1em">  0^0 = ?</span>');
-    blank();
-    addLine('  <span style="color:var(--dim)">(type your answer)</span>');
-    blank();
-    awaitingRiddle = true;
-  },
 
-  hackdev() {
-    if (!hackdevUnlocked) {
-      blank();
-      addLine('  <span class="error">command not found: hackdev</span>  type <span style="color:var(--green)">help</span> for available commands');
-      blank();
-      return;
+    const W = 28, H = 14;
+    let snake = [{x:8,y:6},{x:7,y:6},{x:6,y:6}];
+    let dir = {x:1,y:0}, nextDir = {x:1,y:0};
+    let score = 0;
+    let food = mkFood();
+    let interval;
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'white-space:pre;line-height:1.5;';
+    wrap.className = 'line output-line';
+    output.appendChild(wrap);
+    scrollBottom();
+
+    function mkFood() {
+      let p;
+      do { p = {x:Math.floor(Math.random()*W), y:Math.floor(Math.random()*H)}; }
+      while (snake.some(s=>s.x===p.x&&s.y===p.y));
+      return p;
     }
-    blank();
-    addLine('  <span style="color:#ff2222;font-weight:700;font-size:15px;">INITIATING BREACH SEQUENCE ...</span>');
-    blank();
-    setTimeout(() => addLine('  <span style="color:#ff4444">[!!] FIREWALL BYPASSED</span>'), 400);
-    setTimeout(() => addLine('  <span style="color:#ff4444">[!!] ENCRYPTION BROKEN</span>'), 900);
-    setTimeout(() => addLine('  <span style="color:#ff2222;font-weight:700">ACCESS GRANTED — root@abishek-portfolio</span>'), 1400);
-    setTimeout(() => {
+
+    const HEAD = {right:'▶',left:'◀',up:'▲',down:'▼'};
+
+    function render() {
+      const g = Array.from({length:H}, ()=>Array(W).fill(0));
+      snake.forEach((s,i)=>{ if(s.x>=0&&s.x<W&&s.y>=0&&s.y<H) g[s.y][s.x]=i===0?2:1; });
+      g[food.y][food.x]=3;
+      const hd = nextDir.x===1?'right':nextDir.x===-1?'left':nextDir.y===-1?'up':'down';
+      const top    = `  ┌${'─'.repeat(W)}┐`;
+      const bottom = `  └${'─'.repeat(W)}┘`;
+      const rows = g.map(row=>'  │'+row.map(c=>{
+        if(c===0) return ' ';
+        if(c===1) return `<span style="color:var(--green)">█</span>`;
+        if(c===2) return `<span style="color:var(--green);font-weight:bold">${HEAD[hd]}</span>`;
+        return `<span style="color:#f0c040">◆</span>`;
+      }).join('')+'│');
+      const bar = `  score: <span style="color:var(--green);font-weight:700">${score}</span>   <span style="color:var(--dim)">↑↓←→ move · q quit</span>`;
+      wrap.innerHTML = bar+'\n'+top+'\n'+rows.join('\n')+'\n'+bottom;
+      scrollBottom();
+    }
+
+    function step() {
+      dir = nextDir;
+      const head = {x:snake[0].x+dir.x, y:snake[0].y+dir.y};
+      if(head.x<0||head.x>=W||head.y<0||head.y>=H||snake.some(s=>s.x===head.x&&s.y===head.y)){
+        end('game over'); return;
+      }
+      snake.unshift(head);
+      if(head.x===food.x&&head.y===food.y){ score++; food=mkFood(); } else snake.pop();
+      render();
+    }
+
+    function end(reason) {
+      clearInterval(interval);
+      snakeActive = false;
+      snakeKeyHandler = null;
+      render();
       blank();
-      startRedBleed();
-    }, 1700);
+      addLine(`  <span style="color:#ff4444">${reason}</span> · score: <span style="color:var(--green);font-weight:700">${score}</span>`);
+      const msg = score>=15?"ok you're clearly a problem solver. hire me.":score>=8?'not bad. type snake to play again.':'skill issue. type snake to try again.';
+      addLine(`  <span style="color:var(--dim)">${msg}</span>`);
+      blank();
+    }
+
+    snakeKeyHandler = e => {
+      const {x,y} = dir;
+      if      (e.key==='ArrowUp'    && y!== 1) nextDir={x:0, y:-1};
+      else if (e.key==='ArrowDown'  && y!==-1) nextDir={x:0, y:1};
+      else if (e.key==='ArrowLeft'  && x!== 1) nextDir={x:-1,y:0};
+      else if (e.key==='ArrowRight' && x!==-1) nextDir={x:1, y:0};
+      else if (e.key==='q' || e.key==='Q')     end('you quit');
+      e.preventDefault();
+    };
+
+    snakeActive = true;
+    render();
+    interval = setInterval(step, 130);
   },
 
   now() {
@@ -1247,11 +1246,14 @@ const COMMANDS = [
   'man','man whoami','man projects','man skills','man experience','man contact',
   'man status','man cat','man open','man tree','man history','man clear','man help',
   'theme','theme default','theme amber','theme matrix','theme classic',
-  'secret key',
+  'snake',
 ];
 
 /* ── Interactive input ───────────────────────────────────────── */
 input.addEventListener('keydown', e => {
+  // Snake game intercept
+  if (snakeActive && snakeKeyHandler) { snakeKeyHandler(e); return; }
+
   // Bash-style shortcuts
   if (e.ctrlKey && e.key === 'l') { e.preventDefault(); responses.clear(); return; }
   if (e.ctrlKey && e.key === 'u') { e.preventDefault(); input.value = ''; return; }
@@ -1294,31 +1296,6 @@ input.addEventListener('keydown', e => {
     history.unshift(raw);
     if (history.length > 100) history.pop();
     histIdx = -1;
-
-    // Riddle interceptor
-    if (awaitingRiddle) {
-      const ans = raw.toLowerCase().trim();
-      if (ans === '1' || ans === 'one') {
-        awaitingRiddle   = false;
-        hackdevUnlocked  = true;
-        blank();
-        addLine('  <span style="color:var(--green)">✓ correct.</span>', 'output-line');
-        blank();
-        addLine('  secret command unlocked.');
-        blank();
-        const big = document.createElement('div');
-        big.className = 'line output-line';
-        big.innerHTML = '  <span style="font-size:23px;font-weight:700;color:var(--green)">try "hackdev" to hack this website</span>';
-        output.appendChild(big);
-        scrollBottom();
-        blank();
-      } else {
-        blank();
-        addLine('  <span class="error">wrong.</span> <span style="color:var(--dim)">hint: 0^0 is a classic CS debate — but the answer here is a single digit.</span>');
-        blank();
-      }
-      return;
-    }
 
     // Run
     const key = raw.toLowerCase();
