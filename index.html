@@ -212,17 +212,14 @@
   }
   .tb-icon:hover { color: var(--green); opacity: 1; }
 
-  .dot-pulse {
-    display: inline-block;
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: currentColor;
-    animation: pulse 2s ease-in-out infinite;
-    vertical-align: middle;
+  .dot-pulse::after {
+    content: '▋';
+    animation: blink 1s step-end infinite;
   }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.4; transform: scale(0.7); }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
   }
 
   .dots {
@@ -665,6 +662,7 @@ function renderHelp() {
     ['cat puripy',       'PuriPy details + link'],
     ['cat astralecture', 'Astralecture details + link'],
     ['cat ragchatbot',   'RAG Chatbot details + link'],
+    ['cat kirana-db',   'Kirana-db details + link'],
     ['tree',             'project directory tree'],
     ['uses',             'daily dev setup'],
     ['history',          'command history'],
@@ -709,8 +707,9 @@ const responses = {
     addLine('  [1] PuriPy          — time-travel debugger for Python');
     addLine('  [2] Astralecture     — real-time 3D solar system (Three.js, 60 FPS)');
     addLine('  [3] RAG Chatbot      — document Q&A with FAISS vector search');
+    addLine('  [4] Kirana-DB      — a columnar SQL query engine written from scratch in Rust');
     blank();
-    addLine('  <span style="color:var(--dim)">→ run</span> <span style="color:var(--green)">cat puripy</span> <span style="color:var(--dim)">·</span> <span style="color:var(--green)">cat astralecture</span> <span style="color:var(--dim)">·</span> <span style="color:var(--green)">cat ragchatbot</span> <span style="color:var(--dim)">for details + links</span>');
+    addLine('  <span style="color:var(--dim)">→ run</span> <span style="color:var(--green)">cat puripy</span> <span style="color:var(--dim)">·</span> <span style="color:var(--green)">cat astralecture</span> <span style="color:var(--dim)">·</span> <span style="color:var(--green)">cat ragchatbot</span> <span style="color:var(--dim)">·</span> <span style="color:var(--green)">cat kiranadb</span> <span style="color:var(--dim)">for details + links</span>');
     blank();
   },
 
@@ -739,6 +738,8 @@ const responses = {
     blank();
   },
 
+
+
   'cat ragchatbot'() {
     blank();
     addLine('  RAG Chatbot', 'highlight');
@@ -751,6 +752,21 @@ const responses = {
     blank();
   },
 
+
+
+  'cat kiranadb'() {
+    blank();
+    addLine('  KiranaDB', 'highlight');
+    addLine('  ──────────────────────────────────────────────');
+    addLine('  Columnar SQL query engine built from scratch in Rust.');
+    addLine('  Vectorized, pull-based (Volcano-style) execution over Apache');
+    addLine('  Arrow. Custom planner, optimizer passes, hash join, REPL.');
+    blank();
+    addLine('  → <a class="out-link" href="https://github.com/ivakehs77/kirana-db" target="_blank">github.com/ivakehs77/kirana-db</a>');
+    blank();
+  },
+
+  
   skills() {
     blank();
     addLine('  technical skills', 'highlight');
@@ -833,7 +849,8 @@ const responses = {
     addLine('  ├── projects/');
     addLine('  │   ├── puripy/          <span style="color:var(--dim)">[Python · sys.settrace · Gemini · Textual]</span>');
     addLine('  │   ├── astralecture/    <span style="color:var(--dim)">[Three.js · Vite · Web Audio API · Vercel]</span>');
-    addLine('  │   └── ragchatbot/      <span style="color:var(--dim)">[Python · FAISS · OpenAI · Streamlit]</span>');
+    addLine('  │   ├── ragchatbot/      <span style="color:var(--dim)">[Python · FAISS · OpenAI · Streamlit]</span>');
+    addLine('  │   └── kiranadb/        <span style="color:var(--dim)">[Rust · Apache Arrow · sqlparser-rs · Criterion]</span>');
     addLine('  ├── experience/');
     addLine('  │   ├── research-it/     <span style="color:var(--dim)">[FastAPI · JS · Render · Vercel · Nov 2025–]</span>');
     addLine('  │   └── peer-tutor/      <span style="color:var(--dim)">[CS · Data Structures · Python · Math]</span>');
@@ -1058,7 +1075,8 @@ const responses = {
   'cat rag'()         { responses['cat ragchatbot'](); },
   'cat puri'()        { responses['cat puripy'](); },
   'cat astral'()      { responses['cat astralecture'](); },
-
+  'cat kirana'()      { responses['cat kiranadb'](); },
+  'cat kirana-db'()   { responses['cat kiranadb'](); },
   hi() { responses.hello(); },
 
   clear() {
@@ -1240,7 +1258,7 @@ document.addEventListener('keydown', e => {
 const COMMANDS = [
   'help','help --all','import abishek','projects','skills','experience','tree','contact','status',
   'now','uses','history','clear','revert','hello','hi',
-  'cat puripy','cat astralecture','cat ragchatbot',
+  'cat puripy','cat astralecture','cat ragchatbot','cat kirana-db',
   'open github','open linkedin','open resume',
   'sudo hire-me','sudo',
   'man','man whoami','man projects','man skills','man experience','man contact',
